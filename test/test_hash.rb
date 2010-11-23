@@ -54,3 +54,21 @@ class TestHash < Test
 		end
 	end
 end
+
+class TestHashMemoryReuse < Test
+	def test_reuse
+		h1 = H.new(
+			str:"foo",
+			arr:[1,2,3], # Will be swapped out with StaticArray
+			hsh:{str:"bar"} # Will be swapped out with StaticHash
+		)
+		h2 = h1.merge int:42
+		h3 = h2.merge do |h|
+			h[:hsh] = h[:hsh].merge more:true
+		end
+		assert_equal h1[:str].object_id, h2[:str].object_id
+		assert_equal h1[:arr].object_id, h2[:arr].object_id
+		assert_equal h1[:hsh].object_id, h2[:hsh].object_id
+		assert_equal h1[:hsh][:str].object_id, h3[:hsh][:str].object_id
+	end
+end
