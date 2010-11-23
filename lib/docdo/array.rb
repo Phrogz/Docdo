@@ -20,37 +20,32 @@ class Docdo::StaticArray
 		if PASS_ARRAY_METHODS[method_name]
 			@a.send(method_name,*args,&block)
 		elsif WRAP_ARRAY_METHODS[method_name]
-			self.class.new( *@a.dup.send(method_name,*args,&block) )
+			self.class.new( @a.dup.send(method_name,*args,&block) )
 		else
 			raise NoMethodError, "#{self.class} has no method named '#{method_name}'"
 		end
 	end
 
- 	def initialize(*initial_values,&block)
-		@a = []
-		set_values(initial_values) unless initial_values.empty?
-		mutate(&block) if block_given?
+ 	def initialize(initial_values=[])
+		new_values = initial_values.dup
+		yield new_values if block_given?
+		@a = new_values.map do |value|
+			case value
+				when Array then self.class.new value
+				when Hash then ::Docdo::Hash.new value
+				else value.freeze
+			end
+		end
+	end
+
+	def clone(&block)
+		self.class.new( @a, &block )
 	end
 	
 	def to_a
 		@a.dup
 	end
 	alias_method :to_ary, :to_a
-	
-	protected
-		def set_values(values)
-			@a = values.map do |value|
-				case value
-					when Array then self.class.new value
-					when Hash then ::Docdo::StaticArray.new( value )
-					else value.freeze
-				end
-			end
-		end
-		def mutate
-			yield @a
-			set_values @a
-		end
 end
 
 :IMOGEN

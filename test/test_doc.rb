@@ -17,15 +17,18 @@ class TestBasics < Test
 			flt: 17.0,
 			str: "foo"
 		}
-		doc = Docdo.new do |d|
+		doc1 = Docdo.new legal		
+		doc2 = Docdo.new do |doc|
 			legal.each do |k,v|
-				d[k] = v
+				doc[k] = v
 			end
 		end
-		assert_equal legal.keys, doc.keys
-		assert_equal legal.values, doc.values
+		assert_equal legal.keys, doc1.keys
+		assert_equal legal.keys, doc2.keys
+		assert_equal legal.values, doc1.values
+		assert_equal legal.values, doc2.values
 		keys, values = [], []
-		doc.each do |key,value|
+		doc2.each do |key,value|
 			keys << key
 			values << value
 		end
@@ -43,13 +46,13 @@ class TestMutability < Test
 	end
 	
 	def test_immutable
-		assert_raises NoMethodError do
+		assert_raises NoMethodError, "Cannot add new keys" do
 			@doc[:key] = :value
 		end
-		assert_raises NoMethodError do
-			@doc[:sym] = :omega
+		assert_raises NoMethodError, "Cannot change existing keys" do
+			@doc[:sym] = :omega 
 		end
-		assert_raises RuntimeError do
+		assert_raises RuntimeError, "Cannot modify existing strings" do
 			@doc[:str][0] = 'b'
 		end
 	end

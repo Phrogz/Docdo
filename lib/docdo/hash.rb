@@ -8,6 +8,24 @@ class Docdo::StaticHash
 		to_s inspect keys values key values_at
 		length size rassoc reject select to_a
 	}.map{ |m| [m.to_sym,true] } ]
+
+	def initialize(initial_values={})
+		@h = {}
+		new_values = initial_values.dup
+		yield new_values if block_given?
+		new_values.each do |key,value|
+			@h[key] = case value
+				when Array then ::Docdo::StaticArray.new
+				when Hash then self.class.new(@h)
+				else value.freeze
+			end
+		end
+	end	
+
+	def merge(new_values={},&mutating_block)
+		self.class.new(@h.merge(new_values),&mutating_block)
+	end
+	alias_method :clone, :merge
 	
 	# :nodoc:
 	def method_missing(method_name,*args,&block)
@@ -18,39 +36,7 @@ class Docdo::StaticHash
 		end
 	end
 
-	def initialize(initial_values={},&block)
-		@h = {}
-		pull_in(initial_values) unless initial_values.empty?
-		mutate(&block) if block_given?
-	end
-	
 	def to_hash
 		@h.dup
 	end
-	
-	def clone(&block)
-		self.class.new(@h,&block)
-	end
-	
-	def merge(h,&block)
-		dup = self.clone.pull_in(h)
-		dup.mutate(&block) if block
-		dup
-	end
-	
-	protected
-		def mutate
-			yield @h
-			pull_in(@h)
-		end
-		def pull_in(values_hash)
-			values_hash.each do |key,value|
-				@h[key] = case value
-					when Array then ::Docdo::StaticArray.new
-					when Hash then self.class.new(@h)
-					else value.freeze
-				end
-			end
-			self
-		end
 end

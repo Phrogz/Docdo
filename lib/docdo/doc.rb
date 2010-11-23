@@ -1,8 +1,11 @@
+require_relative 'hash'
+
 class Docdo
+	VERSION = "0.1"
 	class UndoStackEmpty < RuntimeError; end
 	class RedoStackEmpty < RuntimeError; end
-	def initialize(&block)
-		@state = StaticHash.new(&block)
+	def initialize( initial_values={}, &init_block ) 
+		@state = StaticHash.new initial_values, &init_block
 		@stack = [@state]
 		@names = []
 		@index = 0
