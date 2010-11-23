@@ -90,5 +90,4 @@ class TestArray < Test
 			assert_equal :a, a[0]
 		end
 	end
-
 end

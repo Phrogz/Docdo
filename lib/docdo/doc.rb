@@ -34,7 +34,6 @@ class Docdo
 		raise RedoStackEmpty unless next_redo
 		@state = @stack[ @index+=1 ]
 	end
-	
 	def method_missing(*args,&block)
 		@state.send(*args,&block)
 	end

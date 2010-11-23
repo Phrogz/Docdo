@@ -1,4 +1,5 @@
 class Docdo; end
+
 class Docdo::StaticHash
 	# :nodoc:
 	LEGAL_HASH_METHODS = Hash[ %w{

@@ -163,3 +163,79 @@ class TestUndoRedo < Test
 		assert !@doc.last_undo
 	end
 end
+
+class TestHierarchalDiffs < Test
+	def setup
+		@doc = Docdo.new(
+			str: "foo",
+			pref: { splash:true, name:"Bob", coords:[17,42] },
+			vids: [1,2,3,4,5],
+			cats: [ {name:"Misty",age:3} ]
+		)
+	end
+	def test_string_mutate
+		@doc.as :mutate_string do |d|
+			d[:str] = "moo"
+		end
+		assert_equal "moo", @doc[:str].to_s
+		@doc.undo
+		assert_equal "foo", @doc[:str].to_s
+	end
+	
+	def test_hash_mutate
+		@doc.as :mutate_hash do |d|
+			d[:pref][:splash] = false
+			d[:pref][:shutup] = true
+			d[:pref][:coords][0] = 19.5
+			d[:pref][:coords] << 99
+		end
+		assert_equal false, @doc[:pref][:splash]
+		assert_equal true,  @doc[:pref][:shutup]
+		assert_equal 19.5,  @doc[:pref][:coords][0]
+		assert_equal 3,     @doc[:pref][:coords].length
+		
+		@doc.undo
+		
+		assert_equal true,  @doc[:pref][:splash]
+		assert_nil          @doc[:pref][:shutup]
+		assert_equal 17,    @doc[:pref][:coords][0]
+		assert_equal 2,     @doc[:pref][:coords].length
+	end
+	
+	def test_array_mutate
+		@doc.as :mutate_array do |d|
+			d[:vids] << 99
+		end
+		assert_equal 99, @doc[:vids].last
+		assert_equal  6, @doc[:vids].length
+		
+		@doc.as :mutate_more do |d|
+			d[:vids].delete_if{ |i| i<4 }
+		end
+		assert_equal 3, @doc[:vids].length
+
+		@doc.undo
+		assert_equal 6, @doc[:vids].length
+
+		@doc.undo
+		assert_equal 5, @doc[:vids].length
+		assert_equal 5, @doc[:vids].last
+	end
+	
+	def test_array_of_hashes_mutate
+		old_id = @doc[:cats].first[:name].object_id
+		
+		@doc.as :mutate_array do |d|
+			d[:cats] << {name:"Phleep",age:14}
+			d[:cats].first[:age] = 4
+		end
+		assert_equal 2, @doc[:cats].length
+		assert_equal 4, @doc[:cats].first[:age]
+		assert_equal old_id, @doc[:cats].first[:name].object_id, "Unchanged heavy data must use the same resource"
+				
+		@doc.undo
+		
+		assert_equal 1, @doc[:cats].length
+		assert_equal 3, @doc[:cats].first[:age]	
+	end
+end
