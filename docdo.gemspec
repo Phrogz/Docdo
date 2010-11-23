@@ -4,7 +4,7 @@ Dir.chdir 'lib' do
 end
 
 Gem::Specification.new do |s|
-	s.name        = "docubot"
+	s.name        = "docdo"
 	s.version     = Docdo::VERSION
 	s.date        = "2010-11-22"
 	s.author      = "Gavin Kistner"
